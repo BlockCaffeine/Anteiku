@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 
@@ -12,18 +13,11 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 });
 const proto = grpc.loadPackageDefinition(packageDefinition) as any;
 
+const host = process.env.GRPC_SERVER_HOST || '127.0.0.1';
+const port = process.env.GRPC_SERVER_PORT || '50051';
+const address = `${host}:${port}`;
+
 export const client = new proto.jurassip.CoffeeMaker(
-  'localhost:50051', // Change to your server address if needed
+  address,
   grpc.credentials.createInsecure()
 );
-
-// client.MakeProduct(
-//   { coffee_type: 'EspressoDouble', strength: 'Strong' },
-//   (err: any, response: any) => {
-//     if (err) {
-//       console.error('Error:', err);
-//     } else {
-//       console.log('Response:', response.message);
-//     }
-//   }
-// );

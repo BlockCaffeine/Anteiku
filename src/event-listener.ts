@@ -1,37 +1,34 @@
-import { ethers } from "ethers";
-import 'dotenv/config';
-import { client } from "./grpc-client";
+import { ethers } from 'ethers';
+import { client } from './grpc-client';
+import contractAbi from '../resources/contract-abi.json' with { type: 'json' };
 
-const rpc_url = process.env.RPC_URL;
-if (!rpc_url) {
-  throw new Error("RPC_URL is not defined in .env file");
+const blockchain_rpc_url = process.env.BLOCKCHAIN_RPC_URL;
+if (!blockchain_rpc_url) {
+  throw new Error('RPC_URL environment variable is not set');
 }
 
-const provider = new ethers.JsonRpcProvider(rpc_url);
+const contractAddress = process.env.CONTRACT_ADDRESS;
+if (!contractAddress) {
+  throw new Error('CONTRACT_ADDRESS environment variable is not set');
+}
 
-// Replace with your contract's ABI and address
-const contractAbi = [
-  // Example event: event CoffeePurchased(address buyer, string coffeeType, string strength);
-  "event CoffeePurchased(address indexed buyer, string coffeeType, string strength)"
-];
-const contractAddress = "<YOUR_CONTRACT_ADDRESS_HERE>"; // TODO: Replace with actual address
-
+const provider = new ethers.JsonRpcProvider(blockchain_rpc_url);
 const contract = new ethers.Contract(contractAddress, contractAbi, provider);
 
-contract.on("CoffeePurchased", async (buyer, coffeeType, strength, event) => {
-  console.log(`Coffee purchased by ${buyer}: ${coffeeType} (${strength})`);
+contract.on('ProductPurchased', async (productType, productStrength) => {
+  console.log(`${productType} (${productStrength}) purchased!`);
+  console.log('Calling gRPC to make the product...');
 
   // Call gRPC to make the product
   client.MakeProduct(
-    { coffee_type: coffeeType, strength: strength },
+    { product_type: productType, product_strength: productStrength }, 
     (err, response) => {
-      if (err) {
-        console.error("gRPC Error:", err);
-      } else {
-        console.log("gRPC Response:", response.message);
-      }
+    if (err) {
+      console.error('gRPC Error:', err);
+    } else {
+      console.log('gRPC Response:', response.message);
     }
-  );
+  });
 });
 
-console.log("Listening for CoffeePurchased events...");
+console.log('Listening for CoffeePurchased events...');
